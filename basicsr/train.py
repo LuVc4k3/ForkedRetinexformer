@@ -256,8 +256,10 @@ def main():
         train_sampler.set_epoch(epoch)
         prefetcher.reset()
         train_data = prefetcher.next()
-        
+
         while train_data is not None:
+            # if current_iter % 100 == 0:
+            print(f"==================Current iteration: {current_iter}")
             data_time = time.time() - data_time
 
             current_iter += 1
