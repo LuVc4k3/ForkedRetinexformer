@@ -121,6 +121,59 @@ class CharbonnierLoss(nn.Module):
         loss = torch.mean(torch.sqrt((diff * diff) + (self.eps*self.eps)))
         return loss
 
+
+class LuminanceL1Loss(nn.Module):
+    """
+    Luminance L1 Loss for Low-Light Image Enhancement.
+
+    Computes loss based on luminance (grayscale) and combines it with the RGB L1 loss
+    for improved low-light image correction.
+    """
+
+    def __init__(self, luminance_weight=0.5, loss_weight=1.0, reduction="mean"):
+        super(LuminanceL1Loss, self).__init__()
+        self.luminance_weight = luminance_weight
+        self.loss_weight = loss_weight
+        self.reduction = reduction
+
+    def forward(self, pred, target):
+        """
+        Args:
+            pred (Tensor): Predicted tensor of shape (N, C, H, W).
+            target (Tensor): Ground truth tensor of shape (N, C, H, W).
+
+        Returns:
+            Tensor: Combined L1 loss for luminance and RGB.
+        """
+        # Convert to luminance (grayscale)
+        luminance_pred = (
+            0.2989 * pred[:, 0, :, :]
+            + 0.5870 * pred[:, 1, :, :]
+            + 0.1140 * pred[:, 2, :, :]
+        )
+        luminance_target = (
+            0.2989 * target[:, 0, :, :]
+            + 0.5870 * target[:, 1, :, :]
+            + 0.1140 * target[:, 2, :, :]
+        )
+
+        # Compute L1 loss for luminance
+        luminance_loss = F.l1_loss(
+            luminance_pred, luminance_target, reduction=self.reduction
+        )
+
+        # Compute standard RGB L1 loss
+        rgb_loss = F.l1_loss(pred, target, reduction=self.reduction)
+
+        # Combine losses with weights
+        combined_loss = self.loss_weight * (
+            self.luminance_weight * luminance_loss
+            + (1 - self.luminance_weight) * rgb_loss
+        )
+
+        return combined_loss
+
+
 # def gradient(input_tensor, direction):
 #     smooth_kernel_x = torch.reshape(torch.tensor([[0, 0], [-1, 1]], dtype=torch.float32), [2, 2, 1, 1])
 #     smooth_kernel_y = torch.transpose(smooth_kernel_x, 0, 1)
@@ -134,7 +187,7 @@ class CharbonnierLoss(nn.Module):
 #     grad_norm = torch.div((gradient_orig - grad_min), (grad_max - grad_min + 0.0001))
 #     return grad_norm
 
-# class SmoothLoss(nn.Moudle):
+# class SmoothLoss(nn.Module):
 #     """ illumination smoothness"""
 
 #     def __init__(self, loss_weight=0.15, reduction='mean', eps=1e-2):
@@ -142,7 +195,7 @@ class CharbonnierLoss(nn.Module):
 #         self.loss_weight = loss_weight
 #         self.eps = eps
 #         self.reduction = reduction
-    
+
 #     def forward(self, illu, img):
 #         # illu: b×c×h×w   illumination map
 #         # img:  b×c×h×w   input image
@@ -166,7 +219,7 @@ class CharbonnierLoss(nn.Module):
 
 #         self.loss_weight = loss_weight
 #         self.reduction = reduction
-    
+
 
 #     def forward(self, illu):
 #         # illu: b x c x h x w
@@ -178,7 +231,3 @@ class CharbonnierLoss(nn.Module):
 
 #         loss = torch.mean(x_loss+y_loss) * self.loss_weight
 #         return loss
-
-
-
-

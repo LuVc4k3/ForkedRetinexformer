@@ -335,4 +335,4 @@ def visualize_results(image_index, input_paths, target_paths, results_dir):
     plt.show()
 
 
-visualize_results(55, input_paths, target_paths, result_dir)
+visualize_results(5, input_paths, target_paths, result_dir)
