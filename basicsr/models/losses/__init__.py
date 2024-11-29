@@ -1,4 +1,11 @@
-from .losses import L1Loss, MSELoss, PSNRLoss, CharbonnierLoss, LuminanceL1Loss
+from .losses import (
+    L1Loss,
+    MSELoss,
+    PSNRLoss,
+    CharbonnierLoss,
+    LuminanceL1Loss,
+    GradientGraphLaplacianRegularizer,
+)
 
 __all__ = [
     "L1Loss",
@@ -6,4 +13,5 @@ __all__ = [
     "PSNRLoss",
     "CharbonnierLoss",
     "LuminanceL1Loss",
+    "GradientGraphLaplacianRegularizer",
 ]

@@ -331,6 +331,9 @@ def main():
                 # log cur metric to csv file
                 logger_metric = get_root_logger(logger_name='metric')
                 metric_str = f'{current_iter},{current_metric}'
+
+                if "gglr_loss" in model.get_current_log():
+                    metric_str += f',gglr_loss={model.get_current_log()["gglr_loss"]}'
                 logger_metric.info(metric_str)
 
                 # log best metric
@@ -345,6 +348,12 @@ def main():
                     for k, v in opt['val']['metrics'].items():  # best_psnr
                         tb_logger.add_scalar(
                             f'metrics/best_{k}', best_metric[k], current_iter)
+
+                    tb_logger.add_scalar(
+                        "loss/gglr_loss",
+                        model.get_current_log().get("gglr_loss", 0),
+                        current_iter,
+                    )
 
             data_time = time.time()
             iter_time = time.time()

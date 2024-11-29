@@ -174,6 +174,57 @@ class LuminanceL1Loss(nn.Module):
         return combined_loss
 
 
+class GradientGraphLaplacianRegularizer(nn.Module):
+    """
+    Gradient Graph Laplacian Regularizer (GGLR) for smoothness and edge preservation.
+
+    Enforces smooth illumination maps while maintaining gradients at sharp transitions.
+    """
+
+    def __init__(self, loss_weight=0.1):
+        """
+        Args:
+            loss_weight (float): Weight for the GGLR loss term. Default is 0.1.
+        """
+        super(GradientGraphLaplacianRegularizer, self).__init__()
+        self.loss_weight = loss_weight
+
+    @staticmethod
+    def compute_gradients(tensor):
+        """
+        Compute gradients in the x and y directions.
+
+        Args:
+            tensor (Tensor): Input tensor of shape (N, C, H, W).
+
+        Returns:
+            Tuple[Tensor, Tensor]: Gradients in the x and y directions.
+        """
+        grad_x = torch.abs(tensor[:, :, :, :-1] - tensor[:, :, :, 1:])
+        grad_y = torch.abs(tensor[:, :, :-1, :] - tensor[:, :, 1:, :])
+        return grad_x, grad_y
+
+    def forward(self, illumination_map):
+        """
+        Compute the GGLR loss.
+
+        Args:
+            illumination_map (Tensor): Illumination map of shape (N, C, H, W).
+
+        Returns:
+            Tensor: GGLR loss value.
+        """
+        # Compute gradients
+        grad_x, grad_y = self.compute_gradients(illumination_map)
+
+        # Smoothness penalty
+        smoothness_loss = torch.mean(grad_x**2) + torch.mean(grad_y**2)
+
+        # Total GGLR loss with weight
+        total_loss = self.loss_weight * smoothness_loss
+        return total_loss
+
+
 # def gradient(input_tensor, direction):
 #     smooth_kernel_x = torch.reshape(torch.tensor([[0, 0], [-1, 1]], dtype=torch.float32), [2, 2, 1, 1])
 #     smooth_kernel_y = torch.transpose(smooth_kernel_x, 0, 1)
