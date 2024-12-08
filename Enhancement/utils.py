@@ -9,6 +9,8 @@ import os
 import cv2
 import math
 from pdb import set_trace as stx
+import torch
+import sys
 
 
 def calculate_psnr(img1, img2, border=0):
@@ -124,6 +126,14 @@ def visualization(feature, save_path, type='max', colormap=cv2.COLORMAP_JET):
     cv2.imwrite(save_path, color_feat)
 
 def my_summary(test_model, H = 256, W = 256, C = 3, N = 1):
+    # add pip install fvcore command is not installed
+
+    try:
+        from fvcore.nn import FlopCountAnalysis
+    except ImportError:
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "fvcore"])
+        from fvcore.nn import FlopCountAnalysis
     model = test_model.cuda()
     print(model)
     inputs = torch.randn((N, C, H, W)).cuda()
