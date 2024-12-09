@@ -13,5 +13,5 @@ __all__ = [
     "PSNRLoss",
     "CharbonnierLoss",
     "LuminanceL1Loss",
-    "GradientGraphLaplacianRegularizer",
+    "GradientGraphLaplacianRegularizer",'SSIMLoss', 'EdgeLoss'
 ]
