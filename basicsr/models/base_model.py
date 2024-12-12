@@ -98,6 +98,11 @@ class BaseModel():
                 self.schedulers.append(
                     lr_scheduler.CosineAnnealingRestartLR(
                         optimizer, **train_opt['scheduler']))
+        elif scheduler_type == 'ReduceLROnPlateau':
+            for optimizer in self.optimizers:
+                self.schedulers.append(
+                    lr_scheduler.ReduceLROnPlateau(
+                        optimizer, **train_opt['scheduler']))
         elif scheduler_type == 'CosineAnnealingWarmupRestarts':
             for optimizer in self.optimizers:
                 self.schedulers.append(
