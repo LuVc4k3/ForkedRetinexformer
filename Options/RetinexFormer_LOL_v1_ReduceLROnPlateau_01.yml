@@ -1,20 +1,20 @@
 # general settings
-name: Enhancement_RetinexFormer_FiveK
+name: Enhancement_RetinexFormer_LOL_v1_LuminanceL1Loss
 model_type: ImageCleanModel
 scale: 1
 num_gpu: 1  # set num_gpu: 0 for cpu mode
 manual_seed: 100
-use_amp: true
+use_amp: True # NEW - using mixed precision
 
 # dataset and data loader settings
 datasets:
   train:
     name: TrainSet
     type: Dataset_PairedImage
-    dataroot_gt: data/FiveK/train/target
-    dataroot_lq: data/FiveK/train/target
+    dataroot_gt: data/LOLv1/Train/target
+    dataroot_lq: data/LOLv1/Train/input
     geometric_augs: true
-    cache_data: true
+
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -26,16 +26,16 @@ datasets:
 
     ### -------------Progressive training--------------------------
     # mini_batch_sizes: [8,5,4,2,1,1]             # Batch size per gpu   
-    # iters: [92000,64000,48000,36000,36000,24000]
+    # iters: [46000,32000,24000,18000,18000,12000]
     # gt_size: 384   # Max patch size for progressive training
     # gt_sizes: [128,160,192,256,320,384]  # Patch sizes for progressive training.
-    ### ------------------------------------------------------------
+    # ### ------------------------------------------------------------
 
     ### ------- Training on single fixed-patch size 128x128---------
     mini_batch_sizes: [8]   
-    iters: [8000]
-    gt_size: 280   
-    gt_sizes: [280]
+    iters: [300000]
+    gt_size: 128   
+    gt_sizes: [128]
     ### ------------------------------------------------------------
 
     dataset_enlarge_ratio: 1
@@ -44,8 +44,8 @@ datasets:
   val:
     name: ValSet
     type: Dataset_PairedImage
-    dataroot_gt: data/FiveK/test/target
-    dataroot_lq: data/FiveK/test/input
+    dataroot_gt: data/LOLv1/Test/target
+    dataroot_lq: data/LOLv1/Test/input
     io_backend:
       type: disk
 
@@ -59,7 +59,6 @@ network_g:
   num_blocks: [1,2,2]
 
 
-
 # path
 path:
   pretrain_network_g: ~
@@ -68,7 +67,7 @@ path:
 
 # training settings
 train:
-  total_iter: 300000
+  total_iter: 80000 # default 150k
   warmup_iter: -1 # no warm up
   use_grad_clip: true
 
@@ -76,10 +75,19 @@ train:
   # 1st cycle: fixed 3e-4 LR for 92k iters. 
   # 2nd cycle: cosine annealing (3e-4 to 1e-6) for 208k iters.
   scheduler:
-    type: CosineAnnealingRestartCyclicLR
-    periods: [92000, 208000]       
-    restart_weights: [1,1]
-    eta_mins: [0.0003,0.000001]   
+    type: ReduceLROnPlateau
+    mode: 'max'
+    factor: 0.01
+    patience: 500
+    threshold: !!float 1e-3
+    threshold_mode: 'rel'
+    cooldown: 1
+    min_lr: !!float 1e-6
+    verbose: true
+    eps: !!float 1e-8
+
+# design 1
+# convexity KL div, GD's
   
   mixing_augs:
     mixup: true
@@ -87,21 +95,21 @@ train:
     use_identity: true
 
   optim_g:
-    type: Adam
-    lr: !!float 2e-4
+    type: Lion
+    lr: !!float 7e-4 # lion uses 3x smaller Adam optimizer lr - originally 2e-4
     # weight_decay: !!float 1e-4
     betas: [0.9, 0.999]
   
   # losses
   pixel_opt:
-    type: L1Loss
+    type: 'LuminanceL1Loss'
     loss_weight: 1
     reduction: mean
 
 # validation settings
 val:
   window_size: 4
-  val_freq: !!float 4e3
+  val_freq: !!float 1e3
   save_img: false
   rgb2bgr: true
   use_image: false
@@ -115,8 +123,8 @@ val:
 
 # logging settings
 logger:
-  print_freq: 1000
-  save_checkpoint_freq: !!float 4e3
+  print_freq: 500
+  save_checkpoint_freq: !!float 1e3
   use_tb_logger: true
   wandb:
     project: low_light

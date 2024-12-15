@@ -171,6 +171,7 @@ def main():
     # load resume states if necessary，resume_state是重新训练的时候接上的吗？
     if opt['path'].get('resume_state'):
         device_id = torch.cuda.current_device()
+        print(f"Loading resume state from: {opt['path']['resume_state']}")
         resume_state = torch.load(
             opt['path']['resume_state'],
             map_location=lambda storage, loc: storage.cuda(device_id))
@@ -256,8 +257,10 @@ def main():
         train_sampler.set_epoch(epoch)
         prefetcher.reset()
         train_data = prefetcher.next()
-        
+
         while train_data is not None:
+            # if current_iter % 100 == 0:
+            # print(f"==================Current iteration: {current_iter}")
             data_time = time.time() - data_time
 
             current_iter += 1
@@ -329,6 +332,9 @@ def main():
                 # log cur metric to csv file
                 logger_metric = get_root_logger(logger_name='metric')
                 metric_str = f'{current_iter},{current_metric}'
+
+                if "gglr_loss" in model.get_current_log():
+                    metric_str += f',gglr_loss={model.get_current_log()["gglr_loss"]}'
                 logger_metric.info(metric_str)
 
                 # log best metric
@@ -343,6 +349,12 @@ def main():
                     for k, v in opt['val']['metrics'].items():  # best_psnr
                         tb_logger.add_scalar(
                             f'metrics/best_{k}', best_metric[k], current_iter)
+
+                    tb_logger.add_scalar(
+                        "loss/gglr_loss",
+                        model.get_current_log().get("gglr_loss", 0),
+                        current_iter,
+                    )
 
             data_time = time.time()
             iter_time = time.time()

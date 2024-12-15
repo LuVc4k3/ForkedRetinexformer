@@ -5,7 +5,7 @@ from copy import deepcopy
 from os import path as osp
 from tqdm import tqdm
 import glob
-
+from lion_pytorch import Lion  # Import Lion optimizer
 from basicsr.models.archs import define_network
 from basicsr.models.base_model import BaseModel
 from basicsr.utils import get_root_logger, imwrite, tensor2img
@@ -25,6 +25,8 @@ try :
     load_amp = True
 except:
     load_amp = False
+
+USE_GGLR = True
 
 
 class Mixing_Augment:
@@ -71,7 +73,7 @@ class ImageCleanModel(BaseModel):
             print('Using Automatic Mixed Precision')
         else:
             print('Not using Automatic Mixed Precision')
-                  
+
         # define network
         self.mixing_flag = self.opt['train']['mixing_augs'].get('mixup', False)
         if self.mixing_flag:
@@ -150,6 +152,8 @@ class ImageCleanModel(BaseModel):
         elif optim_type == 'AdamW':
             self.optimizer_g = torch.optim.AdamW(
                 optim_params, **train_opt['optim_g'])
+        elif optim_type == "Lion":  # Add Lion support
+            self.optimizer_g = Lion(optim_params, **train_opt["optim_g"])
         else:
             raise NotImplementedError(
                 f'optimizer {optim_type} is not supperted yet.')
@@ -186,7 +190,15 @@ class ImageCleanModel(BaseModel):
 
             loss_dict['l_pix'] = l_pix
 
-        self.amp_scaler.scale(l_pix).backward()
+            # Add GGLR loss from the illumination estimator
+            if USE_GGLR:
+                gglr_loss = self.net_g.get_gglr_loss()
+                loss_dict["gglr_loss"] = gglr_loss
+                total_loss = l_pix + gglr_loss  # Combine losses
+            else:
+                total_loss = l_pix
+
+        self.amp_scaler.scale(total_loss).backward()
         self.amp_scaler.unscale_(self.optimizer_g) # 在梯度裁剪前先unscale梯度
         # l_pix.backward()
 

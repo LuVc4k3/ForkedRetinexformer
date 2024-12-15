@@ -281,3 +281,58 @@ psnr = np.mean(np.array(psnr))
 ssim = np.mean(np.array(ssim))
 print("PSNR: %f " % (psnr))
 print("SSIM: %f " % (ssim))
+
+
+# Added visualizer
+import matplotlib.pyplot as plt
+
+
+def visualize_results(image_index, input_paths, target_paths, results_dir):
+    """
+    Visualize the input, reference (target), and output (enhanced) images.
+
+    Args:
+        image_index (int): Index of the image to visualize.
+        input_paths (list): List of input image paths.
+        target_paths (list): List of target (ground truth) image paths.
+        results_dir (str): Directory containing enhanced images.
+    """
+    if image_index >= len(input_paths):
+        print(
+            f"Invalid index: {image_index}. Please select an index within 0 and {len(input_paths)-1}."
+        )
+        return
+
+    input_path = input_paths[image_index]
+    target_path = target_paths[image_index]
+    enhanced_path = os.path.join(
+        results_dir, os.path.splitext(os.path.basename(input_path))[0] + ".png"
+    )
+
+    # Load images
+    input_img = cv2.imread(input_path)[:, :, ::-1]  # Convert BGR to RGB
+    target_img = cv2.imread(target_path)[:, :, ::-1]  # Convert BGR to RGB
+    enhanced_img = cv2.imread(enhanced_path)[:, :, ::-1]  # Convert BGR to RGB
+
+    # Plot images
+    plt.figure(figsize=(15, 5))
+    plt.subplot(1, 3, 1)
+    plt.imshow(input_img)
+    plt.title("Input (Low-Light)")
+    plt.axis("off")
+
+    plt.subplot(1, 3, 2)
+    plt.imshow(target_img)
+    plt.title("Reference (Illuminated)")
+    plt.axis("off")
+
+    plt.subplot(1, 3, 3)
+    plt.imshow(enhanced_img)
+    plt.title("Enhanced (Model Output)")
+    plt.axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
+
+visualize_results(5, input_paths, target_paths, result_dir)

@@ -7,7 +7,7 @@ import warnings
 from torch.nn.init import _calculate_fan_in_and_fan_out
 from pdb import set_trace as stx
 # import cv2
-
+from basicsr.models.losses import GradientGraphLaplacianRegularizer as GGLR
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     def norm_cdf(x):
@@ -91,7 +91,6 @@ def shift_back(inputs, step=2):
     return inputs[:, :, :, :out_col]
 
 
-
 class Illumination_Estimator(nn.Module):
     def __init__(
             self, n_fea_middle, n_fea_in=4, n_fea_out=3):  #__init__部分是内部属性，而forward的输入才是外部输入
@@ -104,13 +103,16 @@ class Illumination_Estimator(nn.Module):
 
         self.conv2 = nn.Conv2d(n_fea_middle, n_fea_out, kernel_size=1, bias=True)
 
+        # Initialize GGLR
+        self.gglr = GGLR(loss_weight=0.3)
+
     def forward(self, img):
         # img:        b,c=3,h,w
         # mean_c:     b,c=1,h,w
-        
+
         # illu_fea:   b,c,h,w
         # illu_map:   b,c=3,h,w
-        
+
         mean_c = img.mean(dim=1).unsqueeze(1)
         # stx()
         input = torch.cat([img,mean_c], dim=1)
@@ -118,8 +120,12 @@ class Illumination_Estimator(nn.Module):
         x_1 = self.conv1(input)
         illu_fea = self.depth_conv(x_1)
         illu_map = self.conv2(illu_fea)
-        return illu_fea, illu_map
 
+        # Apply GGLR to illu_map
+        gglr_loss = self.gglr(illu_map)
+        self.gglr_loss = gglr_loss  # Store for later access
+
+        return illu_fea, illu_map
 
 
 class IG_MSA(nn.Module):
@@ -326,14 +332,20 @@ class RetinexFormer_Single_Stage(nn.Module):
         super(RetinexFormer_Single_Stage, self).__init__()
         self.estimator = Illumination_Estimator(n_feat)
         self.denoiser = Denoiser(in_dim=in_channels,out_dim=out_channels,dim=n_feat,level=level,num_blocks=num_blocks)  #### 将 Denoiser 改为 img2img
-    
+
     def forward(self, img):
         # img:        b,c=3,h,w
-        
+
         # illu_fea:   b,c,h,w
         # illu_map:   b,c=3,h,w
 
         illu_fea, illu_map = self.estimator(img)
+
+        # Compute GGLR loss for illumination
+        if hasattr(self.estimator, "gglr_loss"):
+            self.gglr_loss = self.estimator.gglr_loss
+            # print(f"gglr_loss: {self.gglr_loss}")
+
         input_img = img * illu_map + img
         output_img = self.denoiser(input_img,illu_fea)
 
@@ -347,9 +359,9 @@ class RetinexFormer(nn.Module):
 
         modules_body = [RetinexFormer_Single_Stage(in_channels=in_channels, out_channels=out_channels, n_feat=n_feat, level=2, num_blocks=num_blocks)
                         for _ in range(stage)]
-        
+
         self.body = nn.Sequential(*modules_body)
-    
+
     def forward(self, x):
         """
         x: [b,c,h,w]
@@ -358,6 +370,16 @@ class RetinexFormer(nn.Module):
         out = self.body(x)
 
         return out
+
+    def get_gglr_loss(self):
+        """
+        Aggregate GGLR loss from all stages.
+        """
+        gglr_loss = 0.0
+        for stage in self.body:
+            if hasattr(stage, "gglr_loss"):
+                gglr_loss += stage.gglr_loss  # Sum all GGLR losses
+        return gglr_loss
 
 
 # if __name__ == '__main__':
