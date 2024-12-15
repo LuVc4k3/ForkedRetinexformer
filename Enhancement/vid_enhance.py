@@ -8,9 +8,10 @@ import utils
 from basicsr.models import create_model
 from basicsr.utils.options import parse
 
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
 
 def load_model(opt_path, weight_path):
-    # Parse the configuration file
     opt = parse(opt_path, is_train=False)
     opt["dist"] = False
 
@@ -29,11 +30,9 @@ def enhance_frame(model, frame):
         torch.tensor(frame, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0).cuda()
     )
 
-    # Forward pass through the model
     with torch.no_grad():
         enhanced = model(frame)
 
-    # Post-process the enhanced frame
     enhanced = enhanced.squeeze(0).permute(1, 2, 0).cpu().numpy()
     enhanced = np.clip(enhanced * 255.0, 0, 255).astype(np.uint8)
     return cv2.cvtColor(enhanced, cv2.COLOR_RGB2BGR)

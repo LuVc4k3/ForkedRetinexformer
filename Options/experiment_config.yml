@@ -1,0 +1,19 @@
+experiments:
+  - name: Vanilla/L1
+    opt_path: "Options/RetinexFormer_LOL_v1_vanilla.yml"
+    weights_path: "experiments/RetinexFormer_LOL_v1_vanilla/best_psnr_23.12_82000.pth"
+  - name: PSNRLoss
+    opt_path: "Options/RetinexFormer_LOL_v1_PSNRLoss.yml"
+    weights_path: "experiments/RetinexFormer_LOL_v1_PSNRLoss/best_psnr_22.57_62000.pth"
+  - name: CharbonnierLoss
+    opt_path: "Options/RetinexFormer_LOL_v1_CharbonnierLoss.yml"
+    weights_path: "experiments/RetinexFormer_LOL_v1_CharbonnierLoss/best_psnr_23.14_72000.pth"
+  - name: L1LuminanceLoss
+    opt_path: "Options/RetinexFormer_LOL_v1_L1LuminanceLoss.yml"
+    weights_path: "experiments/RetinexFormer_LOL_v1_L1LuminanceLoss/best_psnr_22.75_72000.pth"
+  - name: GGLR+L1LuminanceLoss
+    opt_path: "Options/RetinexFormer_LOL_v1_GGLR+L1LuminanceLoss.yml"
+    weights_path: "experiments/RetinexFormer_LOL_v1_GGLR+L1LuminanceLoss/best_psnr_23.01_55000.pth"
+  - name: GGLR+L1LuminanceLoss+Lion
+    opt_path: "Options/RetinexFormer_LOL_v1_GGLR+Luminance+Lion.yml"
+    weights_path: "experiments/RetinexFormer_LOL_v1_GGLR+Luminance+Lion/best_psnr_21.87_17000.pth"
