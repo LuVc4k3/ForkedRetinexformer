@@ -55,18 +55,15 @@ Their dedication and willingness to help at every step were crucial to the succe
 ### Original Video
 You can view the original video below:
 
-<video width="600" controls>
-    <source src="Enhancement/video.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-</video>
+### Original Video
+You can view the original video below:
+
+[Original Video](Enhancement/video.mp4)
 
 ### Enhanced Video Output
 You can view the enhanced video output below (Reduced to 5 FPS for computational efficiency / constraints):
 
-<video width="600" controls>
-    <source src="Enhancement/output_video.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-</video>
+[Enhanced Video Output](Enhancement/output_video.mp4)
 
 ### Discussions as we progreesed through the project:
 
