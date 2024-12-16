@@ -23,7 +23,8 @@ We inherited the RetinexFormer codebase and training pipeline, originally built 
 
 ## Results
 The primary quantitative metric used is Peak Signal-to-Noise Ratio (PSNR). Charbonnier Loss and L1 Loss yielded the best performance. Subjectively, the GGLR+L1LuminanceLoss configuration provided more accurate enhancements, balancing improved illumination fidelity with better color and geometry retention.
-See examples of enhances images, videos and the trained weights at [GoogleDrive](https://drive.google.com/drive/folders/1MOwvRiOAB3fAoSF83KVJW8EBdpXAcVKZ?usp=drive_link).
+
+**See examples of enhances images, videos and the trained weights at [GoogleDrive](https://drive.google.com/drive/folders/1MOwvRiOAB3fAoSF83KVJW8EBdpXAcVKZ?usp=drive_link).**
 
 ## Conclusion
 Overall, we are satisfied with both the vanilla RetinexFormer and some of our tweaked models in LLIE tasks. However, the computational efficiency of the model leaves some to be desired. We think the best use for our model would be as a low-resolution image enhancer module that works in tandem with other feature extraction modules.
